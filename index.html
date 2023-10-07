@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Making your first Phaser 3 Game - Part 1</title>
+    <script src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+            background-image: linear-gradient(rgba(15, 2, 2, 1) 11.2%, rgb(104, 131, 137) 91.1%);
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+
+    <script type="text/javascript">
+
+        //brick field config
+        const brickRowCount = 7;
+        const brickColumnCount = 5;
+        const brickColumnInterval = 130;
+        const brickRowInterval = 55;
+        const brickOffsetTop = 70;
+        const brickOffsetLeft = 150;
+        const redBrickNumber = 3;
+        const stonesNumber = 4;
+
+        var redBricks = [];
+        for (i = 0; i < redBrickNumber; i++) {
+            redBricks[i] = Math.floor(Math.random() * brickColumnCount * brickRowCount);
+        }
+
+        var stonesNumbers = [];
+        for (i = 0; i < stonesNumber; i++) {
+            do
+                stonesNumbers[i] = Math.floor(Math.random() * brickColumnCount * brickRowCount);
+            while (redBricks.indexOf(stonesNumbers[i]) >= 0)
+        }
+
+
+        var config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            autoCenter: true,
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 0 },
+                    debug: false,
+                    /*checkCollision: {
+                        down: false
+                    }*/
+                }
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        let ball;
+        let paddle;
+        let cursors;
+        let gameOver = false;
+        let scoreText;
+        let bricks;
+        let count = 0;
+        let hotState = 0;
+        let particles;
+        let ballBrickCollider;
+        let explosion;
+        let stones;
+        let land;
+        let spotlight;
+        let bgMusic;
+
+        var game = new Phaser.Game(config);
+
+        class Brick extends Phaser.Physics.Arcade.Sprite {
+
+            constructor(config, state) {
+                super(config.scene, config.x, config.y, "brick");
+                this.state = state;
+                config.scene.add.existing(this);
+            }
+        }
+
+
+
+        function preload() {
+            this.load.image('ball', 'img/ball.png');
+            this.load.image('background', 'img/bckgrnd.png');
+            this.load.image('paddle', 'img/paddle.png');
+            this.load.image('brick', 'img/brick.png');
+            this.load.image('red', 'img/red.png');
+            this.load.image('red1', 'img/red1.png');
+            this.load.image('stone', 'img/stone.png');
+            this.load.audio('explosion', 'sound/explosion.wav');
+            this.load.audio('bounce1', 'sound/metal.wav');
+            this.load.audio('bounce2', 'sound/bounce2.mp3');
+            this.load.audio('bounce3', 'sound/bounce3.mp3');
+            this.load.audio('paddle', 'sound/paddle.mp3');
+            this.load.audio('win', 'sound/win.wav');
+            this.load.audio('lose', 'sound/lose.wav');
+            this.load.audio('bckgrnd', 'sound/bckgrnd.mp3');
+        }
+
+        function create() {
+            land = this.add.image(400, 300, 'background');
+            land.setPipeline('Light2D');
+
+            this.sound.add('explosion');
+            this.sound.add('bounce1');
+            this.sound.add('bounce2');
+            this.sound.add('bounce3');
+            this.sound.add('paddle');
+            this.sound.add('win');
+            this.sound.add('lose');
+            bgMusic = this.sound.add('bckgrnd');
+            bgMusic.play({
+                volume: 0.3,
+                loop: true
+            });
+
+            scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#fff' });
+            scoreText.setShadow(0, 0, '#ffffff', 10);
+
+            bricks = this.physics.add.group();
+            stones = this.physics.add.staticGroup();
+
+            let solidCount = 0;
+            for (let c = 0; c < brickColumnCount; c++) {
+                for (let r = 0; r < brickRowCount; r++) {
+                    let brickX = c * brickColumnInterval + brickOffsetLeft;
+                    let brickY = r * brickRowInterval + brickOffsetTop;
+                    if (stonesNumbers.indexOf(count) >= 0) {
+                        let stone = stones.create(brickX, brickY, "stone");
+                        stone.setPipeline('Light2D');
+                        solidCount++;
+                    }
+                    else {
+                        let state = (redBricks.indexOf(count) >= 0) ? "red" : "none";
+                        let brick = new Brick({ scene: this, x: brickX, y: brickY }, state);
+                        bricks.add(brick);
+                        if (state === "red") {
+                            brick.setTint(0xff7505);
+                            //brick.preFX.addShine(1);
+                            brick.postFX.addShine(0.5, 1);
+                        }
+                        brick.setBounce(0.1);
+                        brick.setMass(1000);
+                        brick.body.pushable = false;
+                        brick.setDrag(20);
+                        brick.setPipeline('Light2D');
+                    }
+                    count++;
+                }
+            }
+            count = count - solidCount;
+
+            ball = this.physics.add.image(game.canvas.width * 0.5, game.canvas.height - 30, 'ball');
+            ball.setBounce(1);
+            ball.setCollideWorldBounds(true);
+            ball.body.onWorldBounds = true;
+            ball.body.world.on('worldbounds', (body) => {
+                if (body.blocked.down) {
+                    bgMusic.stop();
+                    this.sound.play('lose');
+                    scoreText.setText('GAME OVER. Bricks left: ' + count);
+                    scoreText.setColor('#ff6a8d');
+                    scoreText.setShadow(0, 0, '#ff0000', 10);
+                    gameOver = true;
+                    this.physics.pause();
+                }
+                else this.sound.play('bounce3');
+                if ((body.blocked.left || body.blocked.right) && Math.abs(body.velocity.y) < Math.abs(body.velocity.x) / 8) {
+                    body.velocity.y *= 1.3;
+                }
+
+                if (ball.body.velocity.length() < 2000) body.velocity.scale(1 + Math.random() * 0.07);
+
+            }, ball);
+            ball.setMass(0.1);
+            ball.preFX.addGlow(0xffb366, 2, 0, false);
+            ball.preFX.disable();
+            ball.postFX.addShine();
+
+            particles = this.add.particles(0, 0, 'red', {
+                speed: 50,
+                scale: { start: 0.3, end: 0 },
+                blendMode: 'ADD'
+            });
+            particles.stop();
+
+            explosion = this.add.particles(0, 0, 'red1', {
+                lifespan: 1500,
+                speed: { min: 50, max: 100 },
+                scale: { start: 0.3, end: 0 },
+                gravity: 350,
+                blendMode: 'ADD',
+                emitting: false
+
+            })
+
+            paddle = this.physics.add.image(game.canvas.width * 0.5, game.canvas.height - 20, 'paddle');
+            paddle.setCollideWorldBounds(true);
+            paddle.body.immovable = true;
+
+            ball.setVelocity(Phaser.Math.Between(-100, 100), -100);
+
+            cursors = this.input.keyboard.createCursorKeys();
+
+            this.physics.add.collider(ball, paddle, hitPaddle, null, this);
+            this.physics.add.collider(ball, stones, hitStone, null, this);
+            ballBrickCollider = this.physics.add.collider(ball, bricks, hitBrick, null, this);
+            this.physics.add.collider(bricks, bricks);
+
+            this.lights.enable();
+            this.lights.setAmbientColor(0xaaaaaa);
+            spotlight = this.lights.addLight(400, 300, 10000).setIntensity(1);
+
+        }
+
+        function update() {
+            if (gameOver) {
+                return;
+            }
+
+            if (cursors.left.isDown) {
+                paddle.setVelocityX(-200);
+            }
+            else if (cursors.right.isDown) {
+                paddle.setVelocityX(200);
+            }
+            else {
+                paddle.setVelocityX(0);
+            }
+
+            scoreText.setText('Bricks left: ' + count);
+
+            if (ball.body.velocity.length() < 150) ball.body.velocity.scale(1.1);
+            if (Math.abs(ball.body.velocity.y) < 5) ball.setVelocityY(ball.body.velocity.y * 1.1);
+
+            if (count === 0) {
+                bgMusic.stop();
+                this.sound.play('win');
+                scoreText.setText('Congratulations! You win! Bricks left: ' + count);
+                scoreText.setColor('#ffd700');
+                scoreText.setShadow(0, 0, '#ffe34d', 10);
+                gameOver = true;
+                this.physics.pause();
+            }
+
+            if (hotState === 0) {
+                ball.preFX.disable();
+                particles.stop();
+                ballBrickCollider.overlapOnly = false;
+
+            }
+            else {
+                ballBrickCollider.overlapOnly = true;
+            }
+
+            spotlight.x = paddle.body.x + paddle.body.width * 0.5;
+
+        }
+
+        function hitPaddle(ball, paddle) {
+
+            this.sound.play('paddle');
+
+            let delta = cursors.right.isDown ? Phaser.Math.DegToRad(Phaser.Math.Between(0, 15)) : cursors.left.isDown ? Phaser.Math.DegToRad(Phaser.Math.Between(-15, 0)) : 0;
+            ball.body.velocity.rotate(delta);
+            if (Math.abs(ball.body.velocity.y) < 1500)
+                ball.body.velocity.scale(1 + Math.random() * 0.07);
+        }
+
+        function hitBrick(ball, brick) {
+
+            if ((Math.abs(ball.body.velocity.x) > Math.abs(ball.body.velocity.y) * 0.5) && (Math.abs(ball.body.velocity.x) < Math.abs(ball.body.velocity.y) * 1.5)) {
+                let tempVel = new Phaser.Math.Vector2();
+                if (ball.body.blocked.down || ball.body.blocked.up) {
+                    tempVel.x = ball.body.velocity.x;
+                    tempVel.y = -ball.body.velocity.y;
+                }
+                else if (ball.body.blocked.left || ball.body.blocked.right) {
+                    tempVel.x = -ball.body.velocity.x;
+                    tempVel.y = ball.body.velocity.y;
+                }
+                else;
+                tempVel.scale(0.3)
+                brick.body.velocity = tempVel;
+
+            }
+            else {
+                if (ball.body.blocked.down) {
+                    brick.setVelocityY(30);
+                }
+                else if (ball.body.blocked.up) {
+                    brick.setVelocityY(-30);
+                }
+                else if (ball.body.blocked.left) {
+                    brick.setVelocityX(-30);
+                }
+                else if (ball.body.blocked.right) {
+                    brick.setVelocityX(30);
+                }
+                else;
+            }
+
+            if (brick.state === "red") {
+                hotState++;
+                ball.preFX.enable();
+                particles.start();
+                particles.startFollow(ball);
+                setTimeout(() => {
+                    hotState--;
+                }, "10000")
+            }
+
+            if (hotState > 0) {
+                this.sound.play('explosion');
+                explosion.startFollow(brick);
+                explosion.explode(20);
+
+                if (brick.body.enable) {
+                    brick.disableBody(true, true);
+                    count--;
+                }
+
+            }
+            else {
+                this.sound.play('bounce1');
+                let tween = this.tweens.add({
+                    targets: brick,
+                    alpha: 0,
+                    duration: 400,
+                    ease: 'Linear',
+                    onComplete: function () {
+                        if (brick.body.enable) {
+                            brick.disableBody(true, true);
+                            count--;
+                        }
+
+                    }
+                });
+            }
+        }
+
+        function hitStone(ball, stone) {
+            this.sound.play('bounce2');
+        }
+
+    </script>
+
+</body>
+
+</html>
