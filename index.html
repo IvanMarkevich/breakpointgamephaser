@@ -193,7 +193,7 @@
                         lives.getChildren()[livesLeft].disableBody(true, true);
                         bgMusic.stop();
                         this.sound.play('lose');
-                        scoreText.setText('GAME OVER. Bricks left: ' + count);
+                        scoreText.setText('DAMMIT! Bricks left: ' + count);
                         scoreText.setColor('#ff6a8d');
                         scoreText.setShadow(0, 0, '#ff0000', 10);
                         gameOver = true;
@@ -284,7 +284,7 @@
             if (count === 0) {
                 bgMusic.stop();
                 this.sound.play('win');
-                scoreText.setText('Congratulations! You win!');
+                scoreText.setText('RESPECT.');
                 scoreText.setColor('#ffd700');
                 scoreText.setShadow(0, 0, '#ffe34d', 10);
                 gameOver = true;
