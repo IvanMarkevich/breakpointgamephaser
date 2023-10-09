@@ -199,7 +199,7 @@
                         livesLeft--;
                         lives.getChildren()[lives.getChildren().length - livesLeft - 1].disableBody(true, true);
                         ball.setPosition(game.canvas.width * 0.5, game.canvas.height - 40);
-                        ball.setVelocity(Phaser.Math.Between(-100, 100), -100);
+                        ball.body.velocity.scale(0.9);
                         paddle.setPosition(game.canvas.width * 0.5, game.canvas.height - 20);
 
 
