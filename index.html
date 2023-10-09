@@ -27,7 +27,7 @@
         const brickOffsetLeft = 150;
         const redBrickNumber = 3;
         const stonesNumber = 4;
-        const maxLives = 3;
+        const maxLives = 2;
 
         var redBricks = [];
         for (i = 0; i < redBrickNumber; i++) {
@@ -81,6 +81,7 @@
         let bgMusic;
         let livesLeft = maxLives;
         let lives;
+        let hotTimeout;
 
         var game = new Phaser.Game(config);
 
@@ -186,6 +187,7 @@
                 if (body.blocked.down) {
                     if (livesLeft === 1) {
                         livesLeft--;
+                        
                         lives.getChildren()[livesLeft].disableBody(true, true);
                         bgMusic.stop();
                         this.sound.play('lose');
@@ -197,6 +199,8 @@
                     }
                     else {
                         livesLeft--;
+                        clearTimeout(hotTimeout);
+                        hotState = 0;
                         lives.getChildren()[lives.getChildren().length - livesLeft - 1].disableBody(true, true);
                         ball.setPosition(game.canvas.width * 0.5, game.canvas.height - 40);
                         ball.body.velocity.scale(0.9);
@@ -346,7 +350,7 @@
                 ball.preFX.enable();
                 particles.start();
                 particles.startFollow(ball);
-                setTimeout(() => {
+                hotTimeout = setTimeout(() => {
                     hotState--;
                 }, "10000")
             }
