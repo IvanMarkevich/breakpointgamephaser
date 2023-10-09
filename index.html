@@ -193,7 +193,7 @@
                         lives.getChildren()[livesLeft].disableBody(true, true);
                         bgMusic.stop();
                         this.sound.play('lose');
-                        scoreText.setText('DAMMIT! Bricks left: ' + count);
+                        scoreText.setText('\u2620  ' + count);
                         scoreText.setColor('#ff6a8d');
                         scoreText.setShadow(0, 0, '#ff0000', 10);
                         gameOver = true;
@@ -276,7 +276,7 @@
                 paddle.setVelocityX(0);
             }
 
-            scoreText.setText('Bricks left: ' + count);
+            scoreText.setText(count);
 
             if (ball.body.velocity.length() < 150) ball.body.velocity.scale(1.1);
             if (Math.abs(ball.body.velocity.y) < 5) ball.setVelocityY(ball.body.velocity.y * 1.1);
@@ -284,7 +284,7 @@
             if (count === 0) {
                 bgMusic.stop();
                 this.sound.play('win');
-                scoreText.setText('RESPECT.');
+                scoreText.setText('\u265B');
                 scoreText.setColor('#ffd700');
                 scoreText.setShadow(0, 0, '#ffe34d', 10);
                 gameOver = true;
