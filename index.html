@@ -27,6 +27,7 @@
         const brickOffsetLeft = 150;
         const redBrickNumber = 3;
         const stonesNumber = 4;
+        const maxLives = 3;
 
         var redBricks = [];
         for (i = 0; i < redBrickNumber; i++) {
@@ -78,6 +79,8 @@
         let land;
         let spotlight;
         let bgMusic;
+        let livesLeft = maxLives;
+        let lives;
 
         var game = new Phaser.Game(config);
 
@@ -100,6 +103,7 @@
             this.load.image('red', 'img/red.png');
             this.load.image('red1', 'img/red1.png');
             this.load.image('stone', 'img/stone.png');
+            this.load.image('heart', 'img/heart.png');
             this.load.audio('explosion', 'sound/explosion.wav');
             this.load.audio('bounce1', 'sound/metal.wav');
             this.load.audio('bounce2', 'sound/bounce2.mp3');
@@ -123,7 +127,7 @@
             this.sound.add('lose');
             bgMusic = this.sound.add('bckgrnd');
             bgMusic.play({
-                volume: 0.4,
+                volume: 0.5,
                 loop: true
             });
 
@@ -132,6 +136,17 @@
 
             bricks = this.physics.add.group();
             stones = this.physics.add.staticGroup();
+            lives = this.physics.add.staticGroup({
+                key: 'heart',
+                repeat: livesLeft - 1,
+                setXY: { x: game.canvas.width - livesLeft * 30, y: 30, stepX: 30 }
+            });
+            lives.children.iterate(function (child) {
+                child.setTint(0xf1464b);
+                child.postFX.addShine();
+                child.setPipeline('Light2D');
+
+            });
 
             let solidCount = 0;
             for (let c = 0; c < brickColumnCount; c++) {
@@ -163,19 +178,32 @@
             }
             count = count - solidCount;
 
-            ball = this.physics.add.image(game.canvas.width * 0.5, game.canvas.height - 30, 'ball');
+            ball = this.physics.add.image(game.canvas.width * 0.5, game.canvas.height - 40, 'ball');
             ball.setBounce(1);
             ball.setCollideWorldBounds(true);
             ball.body.onWorldBounds = true;
             ball.body.world.on('worldbounds', (body) => {
                 if (body.blocked.down) {
-                    bgMusic.stop();
-                    this.sound.play('lose');
-                    scoreText.setText('GAME OVER. Bricks left: ' + count);
-                    scoreText.setColor('#ff6a8d');
-                    scoreText.setShadow(0, 0, '#ff0000', 10);
-                    gameOver = true;
-                    this.physics.pause();
+                    if (livesLeft === 1) {
+                        livesLeft--;
+                        lives.getChildren()[livesLeft].disableBody(true, true);
+                        bgMusic.stop();
+                        this.sound.play('lose');
+                        scoreText.setText('GAME OVER. Bricks left: ' + count);
+                        scoreText.setColor('#ff6a8d');
+                        scoreText.setShadow(0, 0, '#ff0000', 10);
+                        gameOver = true;
+                        this.physics.pause();
+                    }
+                    else {
+                        livesLeft--;
+                        lives.getChildren()[lives.getChildren().length - livesLeft - 1].disableBody(true, true);
+                        ball.setPosition(game.canvas.width * 0.5, game.canvas.height - 40);
+                        ball.setVelocity(Phaser.Math.Between(-100, 100), -100);
+                        paddle.setPosition(game.canvas.width * 0.5, game.canvas.height - 20);
+
+
+                    }
                 }
                 else this.sound.play('bounce3');
                 if ((body.blocked.left || body.blocked.right) && Math.abs(body.velocity.y) < Math.abs(body.velocity.x) / 8) {
@@ -249,7 +277,7 @@
             if (count === 0) {
                 bgMusic.stop();
                 this.sound.play('win');
-                scoreText.setText('Congratulations! You win! Bricks left: ' + count);
+                scoreText.setText('Congratulations! You win!');
                 scoreText.setColor('#ffd700');
                 scoreText.setShadow(0, 0, '#ffe34d', 10);
                 gameOver = true;
