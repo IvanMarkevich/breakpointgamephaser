@@ -113,6 +113,7 @@
             this.load.audio('win', 'sound/win.wav');
             this.load.audio('lose', 'sound/lose.wav');
             this.load.audio('bckgrnd', 'sound/bckgrnd.mp3');
+            this.load.audio('augh', 'sound/augh.mp3')
         }
 
         function create() {
@@ -126,6 +127,7 @@
             this.sound.add('paddle');
             this.sound.add('win');
             this.sound.add('lose');
+            this.sound.add('augh');
             bgMusic = this.sound.add('bckgrnd');
             bgMusic.play({
                 volume: 0.5,
@@ -198,6 +200,7 @@
                         this.physics.pause();
                     }
                     else {
+                        this.sound.play('augh');
                         livesLeft--;
                         clearTimeout(hotTimeout);
                         hotState = 0;
