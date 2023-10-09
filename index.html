@@ -190,7 +190,7 @@
                     if (livesLeft === 1) {
                         livesLeft--;
                         
-                        lives.getChildren()[livesLeft].disableBody(true, true);
+                        lives.getChildren()[lives.getChildren().length - livesLeft - 1].disableBody(true, true);
                         bgMusic.stop();
                         this.sound.play('lose');
                         scoreText.setText('\u2620  ' + count);
