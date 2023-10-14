@@ -8,7 +8,7 @@
     <style type="text/css">
         body {
             margin: 0;
-            background-image: linear-gradient(rgba(15, 2, 2, 1) 11.2%, rgb(104, 131, 137) 91.1%);
+            background-image: linear-gradient(rgba(15, 2, 2, 1) 11.2%, rgb(24, 32, 34) 91.1%);
             height: 100vh;
         }
     </style>
@@ -78,6 +78,7 @@
         let stones;
         let land;
         let spotlight;
+        let spotlightBall;
         let bgMusic;
         let livesLeft = maxLives;
         let lives;
@@ -86,6 +87,7 @@
         var game = new Phaser.Game(config);
 
         class Brick extends Phaser.Physics.Arcade.Sprite {
+            light
 
             constructor(config, state) {
                 super(config.scene, config.x, config.y, "brick");
@@ -147,7 +149,7 @@
             lives.children.iterate(function (child) {
                 child.setTint(0xf1464b);
                 child.postFX.addShine();
-                child.setPipeline('Light2D');
+                // child.setPipeline('Light2D');
 
             });
 
@@ -169,6 +171,8 @@
                             brick.setTint(0xff7505);
                             //brick.preFX.addShine(1);
                             brick.postFX.addShine(0.5, 1);
+                            brick.light = this.lights.addLight(brickX, brickY, 100).setIntensity(0.7);
+                            
                         }
                         brick.setBounce(0.1);
                         brick.setMass(1000);
@@ -193,6 +197,7 @@
                         lives.getChildren()[lives.getChildren().length - livesLeft - 1].disableBody(true, true);
                         bgMusic.stop();
                         this.sound.play('lose');
+                        this.lights.setAmbientColor(0xff0000);
                         scoreText.setText('\u2620  ' + count);
                         scoreText.setColor('#ff6a8d');
                         scoreText.setShadow(0, 0, '#ff0000', 10);
@@ -221,9 +226,12 @@
 
             }, ball);
             ball.setMass(0.1);
+            ball.setPipeline('Light2D');
             ball.preFX.addGlow(0xffb366, 2, 0, false);
             ball.preFX.disable();
             ball.postFX.addShine();
+            
+
 
             particles = this.add.particles(0, 0, 'red', {
                 speed: 50,
@@ -256,8 +264,9 @@
             this.physics.add.collider(bricks, bricks);
 
             this.lights.enable();
-            this.lights.setAmbientColor(0xaaaaaa);
+            this.lights.setAmbientColor(0x0f0f0f);
             spotlight = this.lights.addLight(400, 300, 10000).setIntensity(1);
+            spotlightBall = this.lights.addLight(ball.body.x, ball.body.y, 100).setIntensity(3);
 
         }
 
@@ -284,6 +293,7 @@
             if (count === 0) {
                 bgMusic.stop();
                 this.sound.play('win');
+                this.lights.setAmbientColor(0xffffff);
                 scoreText.setText('\u265B');
                 scoreText.setColor('#ffd700');
                 scoreText.setShadow(0, 0, '#ffe34d', 10);
@@ -295,13 +305,18 @@
                 ball.preFX.disable();
                 particles.stop();
                 ballBrickCollider.overlapOnly = false;
+                spotlightBall.setVisible(false);
 
             }
             else {
                 ballBrickCollider.overlapOnly = true;
+                spotlightBall.setColor(0xff0000);
+                spotlightBall.setVisible(true);
             }
 
             spotlight.x = paddle.body.x + paddle.body.width * 0.5;
+            spotlightBall.x = ball.body.x;
+            spotlightBall.y = ball.body.y;
 
         }
 
@@ -356,6 +371,7 @@
                 hotTimeout = setTimeout(() => {
                     hotState--;
                 }, "10000")
+                brick.light.setVisible(false);
             }
 
             if (hotState > 0) {
