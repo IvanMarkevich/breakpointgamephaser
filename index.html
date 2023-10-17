@@ -83,6 +83,7 @@
         let livesLeft = maxLives;
         let lives;
         let hotTimeout;
+        let flashlight = [];
 
         var game = new Phaser.Game(config);
 
@@ -172,7 +173,7 @@
                             //brick.preFX.addShine(1);
                             brick.postFX.addShine(0.5, 1);
                             brick.light = this.lights.addLight(brickX, brickY, 100).setIntensity(0.7);
-                            
+
                         }
                         brick.setBounce(0.1);
                         brick.setMass(1000);
@@ -193,7 +194,7 @@
                 if (body.blocked.down) {
                     if (livesLeft === 1) {
                         livesLeft--;
-                        
+
                         lives.getChildren()[lives.getChildren().length - livesLeft - 1].disableBody(true, true);
                         bgMusic.stop();
                         this.sound.play('lose');
@@ -230,7 +231,7 @@
             ball.preFX.addGlow(0xffb366, 2, 0, false);
             ball.preFX.disable();
             ball.postFX.addShine();
-            
+
 
 
             particles = this.add.particles(0, 0, 'red', {
@@ -265,8 +266,15 @@
 
             this.lights.enable();
             this.lights.setAmbientColor(0x0f0f0f);
-            spotlight = this.lights.addLight(400, 300, 10000).setIntensity(1);
+
+            for (i = 0; i < 7; i++) {
+                flashlight[i] = this.lights.addLight(400, i * 85, 10001 - i * 1428).setIntensity(0.5 * (i + 1) * 0.15);
+            }
+
+    //        spotlight = this.lights.addLight(game.canvas.width * 0.5, brickOffsetTop + brickRowCount * brickRowInterval * 0.5, 10000).setIntensity(1);
             spotlightBall = this.lights.addLight(ball.body.x, ball.body.y, 100).setIntensity(3);
+
+
 
         }
 
@@ -314,7 +322,11 @@
                 spotlightBall.setVisible(true);
             }
 
-            spotlight.x = paddle.body.x + paddle.body.width * 0.5;
+            for (i = 0; i < 7; i++) {
+
+                flashlight[i].x = paddle.body.x + paddle.body.width * 0.5;
+            }
+  //          spotlight.x = paddle.body.x + paddle.body.width * 0.5;
             spotlightBall.x = ball.body.x;
             spotlightBall.y = ball.body.y;
 
