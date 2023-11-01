@@ -50,7 +50,7 @@
         var config = {
             type: Phaser.AUTO,
             width: (isMobile == -1) ? 800 : window.innerWidth,
-            height: (isMobile == -1) ? 600 : window.innerHeight,
+            height: (isMobile == -1) ? 600 : window.innerWidth,
             autoCenter: true,
             maxLights: 20,
             physics: {
@@ -194,7 +194,7 @@
 
         function create() {
             let scalingX = game.canvas.width * 0.00125;
-            let scalingY = game.canvas.height * 0.0017;
+            let scalingY = game.canvas.width * 0.00125;
             button = new BasicButton({
                 'scene': this,
                 'key': 'start',
@@ -281,7 +281,7 @@
             }
             count = count - solidCount;
 
-            ball = this.physics.add.image(game.canvas.width * 0.5, (isMobile == -1) ? game.canvas.height - 40 : game.canvas.height - 100, 'ball');
+            ball = this.physics.add.image(game.canvas.width * 0.5, (isMobile == -1) ? game.canvas.height - 40 : game.canvas.height - 120, 'ball');
             ball.setBounce(1);
             ball.setCollideWorldBounds(true);
             ball.body.onWorldBounds = true;
@@ -308,10 +308,10 @@
                         clearTimeout(hotTimeout);
                         hotState = 0;
                         lives.getChildren()[lives.getChildren().length - livesLeft - 1].disableBody(true, true);
-                        ball.setPosition(game.canvas.width * 0.5, game.canvas.height - 40);
+                        ball.setPosition(game.canvas.width * 0.5, (isMobile == -1) ? game.canvas.height - 40 : game.canvas.height - 120);
                         ball.body.velocity.scale(0.9);
                         this.tweens.killAll();
-                        paddle.setPosition(game.canvas.width * 0.5, game.canvas.height - 20);
+                        paddle.setPosition(game.canvas.width * 0.5, (isMobile == -1) ? game.canvas.height - 20 : game.canvas.height - 100);
 
 
 
@@ -352,7 +352,7 @@
 
             })
 
-            paddle = this.physics.add.image(game.canvas.width * 0.5 , (isMobile == -1) ? game.canvas.height - 20 : game.canvas.height - 80, 'paddle');
+            paddle = this.physics.add.image(game.canvas.width * 0.5 , (isMobile == -1) ? game.canvas.height - 20 : game.canvas.height - 100, 'paddle');
             paddle.setCollideWorldBounds(true);
             paddle.body.immovable = true;
             paddle.setScale(scalingX);
