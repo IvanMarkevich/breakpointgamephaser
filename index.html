@@ -68,7 +68,7 @@
         let ball;
         let paddle;
         let cursors;
-        let gameOver = false;
+        let gameOver = true;
         let scoreText;
         let bricks;
         let count = 0;
@@ -85,6 +85,8 @@
         let lives;
         let hotTimeout;
         let flashlight = [];
+        let button;
+        
 
         var game = new Phaser.Game(config);
 
@@ -96,6 +98,68 @@
                 this.state = state;
                 config.scene.add.existing(this);
             }
+        }
+
+        class BasicButton extends Phaser.GameObjects.Sprite {
+            constructor(conf) {
+
+                //check if config contains a scene
+                if (!conf.scene) {
+                    console.log('missing scene');
+                    return;
+                }
+                //check if config contains a key
+                if (!conf.key) {
+                    console.log("missing key!");
+                    return;
+                }
+                //if there is no up property assume 0
+                if (!conf.up) {
+                    conf.up = 0;
+                }
+                //if there is no down in config use up
+                if (!conf.down) {
+                    conf.down = conf.up;
+                }
+                //if there is no over in config use up
+                if (!conf.over) {
+                    conf.over = conf.up;
+                }
+                //call the constructor of the parent
+                //set at 0,0 in case there is no x and y
+                //in the config
+                super(conf.scene, 0, 0, conf.key, conf.up);
+                this.conf = conf;
+                //if there is an x assign it
+                if (conf.x) {
+                    this.x = conf.x;
+                }
+                //if there is an x assign it
+                if (conf.y) {
+                    this.y = conf.y;
+                }
+                conf.scene.add.existing(this);
+                this.setInteractive();
+
+                this.on('pointerdown', this.onDown, this);
+                this.on('pointerup', this.onUp, this);
+                this.on('pointerover', this.onOver, this);
+                this.on('pointerout', this.onUp, this);
+
+
+
+            }
+            onDown() {
+                this.setFrame(this.conf.down);
+            }
+            onOver() {
+                console.log(this.conf);
+                this.setFrame(this.conf.over);
+            }
+            onUp() {
+                this.setFrame(this.conf.up);
+            }
+
         }
 
 
@@ -117,10 +181,24 @@
             this.load.audio('win', 'sound/win.wav');
             this.load.audio('lose', 'sound/lose.wav');
             this.load.audio('bckgrnd', 'sound/bckgrnd.mp3');
-            this.load.audio('augh', 'sound/augh.mp3')
+            this.load.audio('augh', 'sound/augh.mp3');
+            this.load.spritesheet("start", "img/start.png", { frameWidth: 204, frameHeight: 202 });
         }
 
         function create() {
+            button = new BasicButton({
+                'scene': this,
+                'key': 'start',
+                'up': 0,
+                'over': 1,
+                'x': game.canvas.width * 0.5,
+                'y': game.canvas.height * 0.5
+            });
+            button.setDepth(5000);
+            button.on('pointerdown', onPressed, this);
+
+
+            console.log(button);
             land = this.add.image(400, 300, 'background');
             land.setPipeline('Light2D');
 
@@ -207,6 +285,7 @@
 
                         scoreText.setColor('#ff6a8d');
                         scoreText.setShadow(0, 0, '#ff0000', 10);
+                        this.tweens.killAll();
                         gameOver = true;
                         this.physics.pause();
                     }
@@ -218,7 +297,9 @@
                         lives.getChildren()[lives.getChildren().length - livesLeft - 1].disableBody(true, true);
                         ball.setPosition(game.canvas.width * 0.5, game.canvas.height - 40);
                         ball.body.velocity.scale(0.9);
+                        this.tweens.killAll();
                         paddle.setPosition(game.canvas.width * 0.5, game.canvas.height - 20);
+                        
 
 
                     }
@@ -261,7 +342,7 @@
             paddle.setCollideWorldBounds(true);
             paddle.body.immovable = true;
 
-            ball.setVelocity(Phaser.Math.Between(-100, 100), -100);
+            //ball.setVelocity(Phaser.Math.Between(-100, 100), -100);
 
             cursors = this.input.keyboard.createCursorKeys();
 
@@ -279,6 +360,19 @@
 
             //        spotlight = this.lights.addLight(game.canvas.width * 0.5, brickOffsetTop + brickRowCount * brickRowInterval * 0.5, 10000).setIntensity(1);
             spotlightBall = this.lights.addLight(ball.body.x, ball.body.y, 100).setIntensity(3);
+
+            this.input.on('pointermove', (pointer) => {
+                if (gameOver) return;
+                //  if (paddle.x > pointer.x) paddle.setVelocityX(-200); else paddle.setVelocityX(200);
+                // this.tweens.add({
+                //     targets: paddle,
+                //     x: pointer.x,
+                    
+                //     duration: 600,
+                //     ease: 'Sine.easeOut',
+                // }, this);
+                paddle.x = pointer.x;
+            }, this);
 
 
 
@@ -336,16 +430,26 @@
             spotlightBall.x = ball.body.x;
             spotlightBall.y = ball.body.y;
 
+
+        }
+
+        function onPressed() {
+            button.destroy();
+            gameOver = false;
+            ball.setVelocity(Phaser.Math.Between(-100, 100), -100);
+            game.canvas.style.cursor = 'none';
         }
 
         function hitPaddle(ball, paddle) {
 
             this.sound.play('paddle');
+            let deltaX = paddle.x - ball.x;
 
-            let delta = cursors.right.isDown ? Phaser.Math.DegToRad(Phaser.Math.Between(0, 15)) : cursors.left.isDown ? Phaser.Math.DegToRad(Phaser.Math.Between(-15, 0)) : 0;
+            let delta = (deltaX < 0) ? Phaser.Math.DegToRad(Phaser.Math.Between(1, 15)) : (deltaX > 0) ? Phaser.Math.DegToRad(Phaser.Math.Between(-15, -1)) : 0;
             ball.body.velocity.rotate(delta);
             if (Math.abs(ball.body.velocity.y) < 1500)
-                ball.body.velocity.scale(1 + Math.random() * 0.07);
+                ball.body.velocity.scale(1 + Math.random() * 0.06);
+            // ball.body.velocity.x = -2.5 * (paddle.x - ball.x);
         }
 
         function hitBrick(ball, brick) {
