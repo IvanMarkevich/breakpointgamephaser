@@ -281,7 +281,7 @@
             }
             count = count - solidCount;
 
-            ball = this.physics.add.image(game.canvas.width * 0.5, (isMobile == -1) ? game.canvas.height - 40 : game.canvas.height - 120, 'ball');
+            ball = this.physics.add.image(game.canvas.width * 0.5, (isMobile == -1) ? game.canvas.height - 40 : game.canvas.height - 220, 'ball');
             ball.setBounce(1);
             ball.setCollideWorldBounds(true);
             ball.body.onWorldBounds = true;
@@ -308,10 +308,10 @@
                         clearTimeout(hotTimeout);
                         hotState = 0;
                         lives.getChildren()[lives.getChildren().length - livesLeft - 1].disableBody(true, true);
-                        ball.setPosition(game.canvas.width * 0.5, (isMobile == -1) ? game.canvas.height - 40 : game.canvas.height - 120);
+                        ball.setPosition(game.canvas.width * 0.5, (isMobile == -1) ? game.canvas.height - 40 : game.canvas.height - 220);
                         ball.body.velocity.scale(0.9);
                         this.tweens.killAll();
-                        paddle.setPosition(game.canvas.width * 0.5, (isMobile == -1) ? game.canvas.height - 20 : game.canvas.height - 100);
+                        paddle.setPosition(game.canvas.width * 0.5, (isMobile == -1) ? game.canvas.height - 20 : game.canvas.height - 200);
 
 
 
@@ -352,7 +352,7 @@
 
             })
 
-            paddle = this.physics.add.image(game.canvas.width * 0.5 , (isMobile == -1) ? game.canvas.height - 20 : game.canvas.height - 100, 'paddle');
+            paddle = this.physics.add.image(game.canvas.width * 0.5 , (isMobile == -1) ? game.canvas.height - 20 : game.canvas.height - 200, 'paddle');
             paddle.setCollideWorldBounds(true);
             paddle.body.immovable = true;
             paddle.setScale(scalingX);
